@@ -28,3 +28,5 @@ venv.bak/
 instance/
 .idea/
 .vscode/
+get-pip.py
+

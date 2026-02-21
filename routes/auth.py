@@ -16,19 +16,35 @@ def register():
         if request.is_json:
             data = request.get_json()
             username = data.get('username')
+            email = data.get('email')
             password = data.get('password')
         else:
              username = request.form.get('username')
+             email = request.form.get('email')
              password = request.form.get('password')
         
-        if User.query.filter_by(username=username).first():
+        # Validation
+        if not username or not email or not password:
+             if request.is_json:
+                return jsonify({'success': False, 'message': 'All fields are required'}), 400
+             flash('All fields are required', 'error')
+             return redirect(url_for('auth.register'))
+
+        # Gmail Validation
+        if not email or not email.lower().endswith('@gmail.com'):
+             if request.is_json:
+                return jsonify({'success': False, 'message': 'Please enter a valid Gmail address (@gmail.com)'}), 400
+             flash('Please enter a valid Gmail address (@gmail.com)', 'error')
+             return redirect(url_for('auth.register'))
+
+        if User.query.filter((User.username==username) | (User.email==email)).first():
             if request.is_json:
-                return jsonify({'success': False, 'message': 'Username already exists'}), 400
-            flash('Username already exists', 'error')
+                return jsonify({'success': False, 'message': 'Username or Email already exists'}), 400
+            flash('Username or Email already exists', 'error')
             return redirect(url_for('auth.register'))
         
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        new_user = User(username=username, password=hashed_password, role='user')
+        new_user = User(username=username, email=email, password=hashed_password, role='user')
         
         try:
             db.session.add(new_user)
@@ -52,14 +68,20 @@ def login():
     if request.method == 'POST':
         if request.is_json:
             data = request.get_json()
-            username = data.get('username')
+            email = data.get('email')
             password = data.get('password')
         else:
-             username = request.form.get('username')
+             email = request.form.get('email')
              password = request.form.get('password')
 
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter_by(email=email).first()
         
+        if not user:
+             if request.is_json:
+                return jsonify({'success': False, 'message': "Gmail doesn't exist. Please enter valid gmail"}), 401
+             flash("Gmail doesn't exist. Please enter valid gmail", 'error')
+             return redirect(url_for('auth.login'))
+
         if user and bcrypt.check_password_hash(user.password, password):
             login_user(user)
             
@@ -77,8 +99,8 @@ def login():
             return redirect(target)
         else:
              if request.is_json:
-                return jsonify({'success': False, 'message': 'Invalid username or password'}), 401
-             flash('Invalid username or password', 'error')
+                return jsonify({'success': False, 'message': 'Invalid password'}), 401
+             flash('Invalid password', 'error')
             
     return render_template('auth_combined.html', mode='login')
 

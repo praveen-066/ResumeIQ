@@ -116,3 +116,48 @@ def suggest_bullet_improvements(line):
         if weak in line.lower():
             return f"Consider replacing '{weak}' with '{strong}' to make it impactful."
     return None
+
+def generate_ai_tips(data):
+    """
+    Generates dynamic AI power tips based on parsed resume data.
+    """
+    tips = []
+    text = data.get('text', '').lower()
+    
+    # 1. Check for Quantifiable Achievements (Numbers/Percentages)
+    # Looking for digits followed by % or numbers indicating scale
+    metrics_patterns = [r'\d+%', r'\d+\+', r'[\$£€]\d+', r'\d+\s*(?:million|billion|k|percent)']
+    has_metrics = any(re.search(pattern, text) for pattern in metrics_patterns)
+    
+    if not has_metrics:
+        tips.append("Add measurable metrics (e.g., 'Increased efficiency by 20%') to demonstrate impact.")
+    
+    # 2. Check for Professional Links
+    has_linkedin = "linkedin.com" in text
+    has_github = "github.com" in text or data.get('projects', False)
+    
+    if not has_linkedin:
+        tips.append("Include your LinkedIn profile link to improve professional visibility.")
+    if not has_github and "developer" in text:
+        tips.append("Add a GitHub profile or portfolio link to showcase your actual work.")
+        
+    # 3. Check for Strong Action Verbs
+    strong_verbs = ["managed", "developed", "spearheaded", "orchestrated", "executed", "leveraged", "implemented", "optimized"]
+    found_strong_verbs = [verb for verb in strong_verbs if verb in text]
+    
+    if len(found_strong_verbs) < 3:
+        tips.append("Use stronger action verbs like 'Spearheaded' or 'Optimized' instead of 'Worked on'.")
+        
+    # 4. Section Specific Tips
+    if not data.get('summary'):
+        tips.append("Include a professional summary at the top to highlight your value proposition quickly.")
+    
+    if not data.get('certifications'):
+        tips.append("Consider adding relevant certifications to validate your skills further.")
+        
+    # 5. Default/Generic Improvements if tips are low
+    if len(tips) < 2:
+        tips.append("Keep your resume to 1-2 pages for maximum readability by recruiters.")
+        tips.append("Ensure your contact information is updated and professional.")
+
+    return tips[:4] # Return top 4 most relevant tips

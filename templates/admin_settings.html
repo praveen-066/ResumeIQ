@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen pt-28 pb-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto">
+
+        <div class="flex items-center mb-8">
+            <a href="{{ url_for('admin.dashboard') }}" class="text-gray-400 hover:text-white mr-4 transition">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </a>
+            <h1 class="text-3xl font-bold text-white"><span class="text-purple">SMTP</span> Settings</h1>
+        </div>
+
+        <div class="glass-panel p-8 rounded-2xl">
+            <form method="POST" action="{{ url_for('admin.settings') }}">
+                <div class="mb-6">
+                    <label class="block text-gray-400 text-sm font-bold mb-2">SMTP Server</label>
+                    <input type="text" name="server" value="{{ config.server if config else '' }}" required
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-neon transition placeholder-gray-600"
+                        placeholder="smtp.gmail.com">
+                </div>
+
+                <div class="mb-6 grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-400 text-sm font-bold mb-2">Port</label>
+                        <input type="number" name="port" value="{{ config.port if config else '587' }}" required
+                            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-neon transition"
+                            placeholder="587">
+                    </div>
+                    <div class="flex items-center pt-8">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" name="use_tls"
+                                class="form-checkbox h-5 w-5 text-neon rounded bg-white/10 border-white/20" {% if config
+                                and config.use_tls %}checked{% endif %}>
+                            <span class="text-gray-300">Use TLS</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Username / Email</label>
+                    <input type="email" name="username" value="{{ config.username if config else '' }}" required
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-neon transition placeholder-gray-600"
+                        placeholder="you@example.com">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-gray-400 text-sm font-bold mb-2">Password / App Password</label>
+                    <input type="password" name="password" value="{{ config.password if config else '' }}" required
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-neon transition placeholder-gray-600"
+                        placeholder="••••••••">
+                </div>
+
+                <div class="flex items-center justify-between mt-8">
+                    <button type="submit" name="action" value="save"
+                        class="bg-purple text-white px-6 py-2 rounded-lg font-bold hover:bg-white hover:text-black transition shadow-[0_0_15px_rgba(189,0,255,0.4)]">
+                        Save Settings
+                    </button>
+
+                    <button type="submit" name="action" value="test"
+                        class="text-neon hover:text-white transition font-medium border border-neon/30 hover:border-white px-4 py-2 rounded-lg">
+                        <i class="fa-regular fa-paper-plane mr-2"></i> Test Email
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
