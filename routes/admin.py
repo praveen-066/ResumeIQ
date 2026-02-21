@@ -3,6 +3,7 @@ from flask_login import login_required
 from flask_mail import Mail, Message
 from utils.decorators import admin_required
 from models import db, User, Resume, SMTPConfig
+from utils.constants import get_all_roles, TARGET_ROLES
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -15,6 +16,8 @@ def dashboard():
     
     # Calculate Metrics
     avg_score = 0
+    shortlisted_count = Resume.query.filter_by(is_shortlisted=True).count()
+    
     if resumes:
         total_score = sum(r.score for r in resumes)
         avg_score = round(total_score / len(resumes), 1)
@@ -23,7 +26,51 @@ def dashboard():
     chart_labels = [r.filename for r in resumes[:10]] # limit to 10 recent
     chart_data = [r.score for r in resumes[:10]]
     
-    return render_template('admin_dashboard.html', users=users, resumes=resumes, avg_score=avg_score, chart_labels=chart_labels, chart_data=chart_data)
+    return render_template('admin_dashboard.html', 
+                          users=users, 
+                          resumes=resumes, 
+                          avg_score=avg_score, 
+                          shortlisted_count=shortlisted_count,
+                          chart_labels=chart_labels, 
+                          chart_data=chart_data)
+
+@admin.route('/candidates')
+@login_required
+@admin_required
+def candidates():
+    role = request.args.get('role', 'All')
+    score_min = request.args.get('score_min', 0, type=int)
+    
+    query = Resume.query
+    
+    if role != 'All':
+        query = query.filter_by(role_applied=role)
+    
+    if score_min > 0:
+        query = query.filter(Resume.score >= score_min)
+        
+    candidates = query.order_by(Resume.score.desc()).all()
+    
+    # Get all possible roles from constants
+    roles = get_all_roles()
+    
+    return render_template('admin_candidates.html', 
+                          candidates=candidates, 
+                          roles=roles, 
+                          target_roles=TARGET_ROLES,
+                          selected_role=role,
+                          selected_score=score_min)
+
+@admin.route('/toggle_shortlist/<int:resume_id>')
+@login_required
+@admin_required
+def toggle_shortlist(resume_id):
+    resume = Resume.query.get_or_404(resume_id)
+    resume.is_shortlisted = not resume.is_shortlisted
+    db.session.commit()
+    
+    flash(f"Candidate {'shortlisted' if resume.is_shortlisted else 'removed from shortlist'}", 'success')
+    return redirect(request.referrer or url_for('admin.candidates'))
 
 @admin.route('/delete_user/<int:user_id>')
 @login_required

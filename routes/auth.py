@@ -68,18 +68,19 @@ def login():
     if request.method == 'POST':
         if request.is_json:
             data = request.get_json()
-            email = data.get('email')
+            login_id = (data.get('email') or data.get('username') or '').strip()
             password = data.get('password')
         else:
-             email = request.form.get('email')
-             password = request.form.get('password')
+            login_id = (request.form.get('email') or request.form.get('username') or '').strip()
+            password = request.form.get('password')
 
-        user = User.query.filter_by(email=email).first()
+        # Try to find user by email or username
+        user = User.query.filter((User.email == login_id) | (User.username == login_id)).first()
         
         if not user:
              if request.is_json:
-                return jsonify({'success': False, 'message': "Gmail doesn't exist. Please enter valid gmail"}), 401
-             flash("Gmail doesn't exist. Please enter valid gmail", 'error')
+                return jsonify({'success': False, 'message': "User doesn't exist. Please register."}), 401
+             flash("User doesn't exist. Please register.", 'error')
              return redirect(url_for('auth.login'))
 
         if user and bcrypt.check_password_hash(user.password, password):

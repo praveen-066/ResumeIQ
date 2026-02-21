@@ -3,22 +3,62 @@ import re
 def parse_resume(text):
     """
     Parses resume text to extract key sections.
+    Stores the full original text (lowercased) in 'text' so the
+    scorer can do rich keyword matching.
     """
-    text = text.lower()
-    
+    text_lower = text.lower()
+
     data = {
-        "name": extract_name(text),
-        "email": extract_email(text),
-        "phone": extract_phone(text),
-        "skills": extract_skills(text),
-        "education": "education" in text or "university" in text or "degree" in text,
-        "experience": "experience" in text or "employment" in text or "work history" in text,
-        "projects": "projects" in text or "portfolio" in text or "github" in text,
-        "summary": "summary" in text or "profile" in text or "objective" in text,
-        "certifications": "certifications" in text or "certificates" in text,
-        "text": text # Store full text for further analysis if needed
+        "name":           extract_name(text_lower),
+        "email":          extract_email(text_lower),
+        "phone":          extract_phone(text_lower),
+        "skills":         extract_skills(text_lower),
+        "education":      extract_section(text_lower, ["education", "academic", "qualification", "degree", "university", "college"]),
+        "experience":     extract_section(text_lower, ["experience", "employment", "work history", "career", "internship"]),
+        "projects":       extract_section(text_lower, ["projects", "portfolio", "github", "personal work"]),
+        "summary":        "summary" in text_lower or "profile" in text_lower or "objective" in text_lower,
+        "certifications": "certifications" in text_lower or "certificates" in text_lower or "certified" in text_lower,
+        # Full lowercase text – primary field used by scorer for keyword matching
+        "text":           text_lower,
     }
     return data
+
+
+def extract_section(text: str, trigger_words: list) -> list:
+    """
+    Returns a list of lines that appear after any of the trigger_words
+    (acting as section headings) up to 15 lines.  If nothing found,
+    returns a one-element list with an empty string so boolean checks
+    still work correctly.
+    """
+    lines = text.splitlines()
+    result = []
+    capturing = False
+    captured = 0
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            if capturing:
+                # blank line might end a section
+                capturing = False
+            continue
+
+        # Check if this line is a section header
+        is_header = any(tw in stripped for tw in trigger_words) and len(stripped) < 60
+        if is_header:
+            capturing = True
+            result.append(stripped)
+            captured = 0
+            continue
+
+        if capturing:
+            result.append(stripped)
+            captured += 1
+            if captured >= 15:
+                capturing = False
+
+    return result if result else []
 
 def extract_name(text):
     # Improved regex for name extraction - looks for capitalized words at start

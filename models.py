@@ -41,11 +41,12 @@ class Resume(db.Model):
     score = db.Column(db.Integer, nullable=False)
     role_applied = db.Column(db.String(100), nullable=False)
     analysis_data = db.Column(db.Text, nullable=True)      # full JSON blob
+    is_shortlisted = db.Column(db.Boolean, default=False)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     def __repr__(self):
-        return f'<Resume id={self.id} file={self.filename!r} score={self.score}>'
+        return f'<Resume id={self.id} file={self.filename!r} score={self.score} shortlisted={self.is_shortlisted}>'
 
 
 class SMTPConfig(db.Model):

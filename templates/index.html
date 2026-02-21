@@ -1,23 +1,23 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="relative min-h-screen flex items-center justify-center overflow-hidden">
+<div class="relative min-h-screen flex items-center justify-center overflow-hidden py-8">
     <!-- Particles Background -->
     <div id="particles-js"></div>
 
     <!-- Hero Content -->
-    <div class="relative z-10 max-w-5xl w-full px-4 text-center mt-10">
+    <div class="relative z-10 max-w-4xl w-full px-4 text-center mt-4">
 
         <div class="gsap-hero opacity-0 translate-y-10">
             <span
-                class="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-neon text-xs tracking-widest uppercase mb-6 backdrop-blur-md">
+                class="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-neon text-xs tracking-widest uppercase mb-3 backdrop-blur-md">
                 AI-Powered ATS Analysis
             </span>
-            <h1 class="text-6xl md:text-8xl font-bold mb-6 tracking-tight leading-tight">
+            <h1 class="text-4xl md:text-6xl font-bold mb-3 tracking-tight leading-tight">
                 Optimize Your <br>
                 <span class="text-gradient">Career Impact</span>
             </h1>
-            <p class="text-xl text-gray-400 mb-12 max-w-2xl mx-auto font-light">
+            <p class="text-base text-gray-400 mb-6 max-w-2xl mx-auto font-light">
                 Unlock your resume's potential with cinematic AI analysis. Get an instant score, detailed breakdown, and
                 actionable feedback.
             </p>
@@ -25,41 +25,26 @@
 
         <!-- Upload Card -->
         <div
-            class="gsap-card opacity-0 scale-95 glass-panel rounded-3xl p-10 max-w-3xl mx-auto relative overflow-hidden group">
+            class="gsap-card opacity-0 scale-95 glass-panel rounded-3xl p-6 max-w-2xl mx-auto relative overflow-hidden group">
             <!-- Glow Effect -->
             <div
                 class="absolute inset-0 bg-gradient-to-r from-neon/10 to-purple/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
             </div>
 
             <form id="uploadForm" class="relative z-10">
-                <div class="mb-8 text-left">
+                <div class="mb-4 text-left">
                     <label class="text-sm font-semibold text-gray-400 ml-2 uppercase tracking-wide">Select Target
                         Role</label>
                     <div class="mt-2 relative">
                         <select id="role" name="role"
                             class="w-full bg-black/40 border border-white/10 text-white px-5 py-4 rounded-xl focus:border-neon focus:ring-1 focus:ring-neon outline-none appearance-none transition cursor-pointer hover:bg-black/60">
-                            <option value="Frontend Developer">Frontend Developer</option>
-                            <option value="Backend Developer">Backend Developer</option>
-                            <option value="Full Stack Developer">Full Stack Developer</option>
-                            <option value="Software Engineer">Software Engineer</option>
-                            <option value="Web Developer">Web Developer</option>
-                            <option value="Mobile App Developer">Mobile App Developer</option>
-                            <option value="Data Scientist">Data Scientist</option>
-                            <option value="Machine Learning Engineer">Machine Learning Engineer</option>
-                            <option value="AI Engineer">AI Engineer</option>
-                            <option value="DevOps Engineer">DevOps Engineer</option>
-                            <option value="Cloud Engineer">Cloud Engineer</option>
-                            <option value="Site Reliability Engineer (SRE)">Site Reliability Engineer (SRE)</option>
-                            <option value="Cybersecurity Analyst">Cybersecurity Analyst</option>
-                            <option value="Penetration Tester">Penetration Tester</option>
-                            <option value="Blockchain Developer">Blockchain Developer</option>
-                            <option value="Embedded Systems Engineer">Embedded Systems Engineer</option>
-                            <option value="Game Developer">Game Developer</option>
-                            <option value="Database Administrator (DBA)">Database Administrator (DBA)</option>
-                            <option value="Data Engineer">Data Engineer</option>
-                            <option value="QA / Automation Test Engineer">QA / Automation Test Engineer</option>
-                            <option value="Network Engineer">Network Engineer</option>
-                            <option value="Systems Engineer">Systems Engineer</option>
+                            {% for category, roles in target_roles.items() %}
+                            <optgroup label="{{ category }}">
+                                {% for role in roles %}
+                                <option value="{{ role }}">{{ role }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endfor %}
                         </select>
                         <div
                             class="absolute right-5 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
@@ -69,11 +54,11 @@
                 </div>
 
                 <div id="dropZone"
-                    class="border-2 border-dashed border-white/20 rounded-2xl p-16 cursor-pointer transition-all duration-300 hover:border-neon hover:bg-white/5 group-hover:scale-[1.01]">
+                    class="border-2 border-dashed border-white/20 rounded-2xl p-8 cursor-pointer transition-all duration-300 hover:border-neon hover:bg-white/5 group-hover:scale-[1.01]">
                     <input type="file" id="resumeFile" name="resume" class="hidden" accept=".pdf,.docx">
                     <div class="flex flex-col items-center justify-center space-y-4">
                         <div
-                            class="w-20 h-20 bg-gradient-to-br from-gray-800 to-black rounded-2xl flex items-center justify-center text-3xl text-white shadow-2xl group-hover:shadow-[0_0_30px_rgba(0,243,255,0.3)] transition-all duration-500">
+                            class="w-14 h-14 bg-gradient-to-br from-gray-800 to-black rounded-2xl flex items-center justify-center text-2xl text-white shadow-2xl group-hover:shadow-[0_0_30px_rgba(0,243,255,0.3)] transition-all duration-500">
                             <i class="fa-solid fa-cloud-arrow-up text-gradient"></i>
                         </div>
                         <div class="text-center">
@@ -86,9 +71,9 @@
                     </div>
                 </div>
 
-                <div id="actionArea" class="mt-8 transition-all duration-500 max-h-0 overflow-hidden opacity-0">
+                <div id="actionArea" class="mt-4 transition-all duration-500 max-h-0 overflow-hidden opacity-0">
                     <button type="submit"
-                        class="w-full bg-white text-black font-bold text-lg py-4 rounded-xl hover:bg-neon hover:text-black transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(0,243,255,0.6)] transform hover:-translate-y-1">
+                        class="w-full bg-white text-black font-bold text-base py-3 rounded-xl hover:bg-neon hover:text-black transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(0,243,255,0.6)] transform hover:-translate-y-1">
                         Analyze Now <i class="fa-solid fa-arrow-right ml-2"></i>
                     </button>
                 </div>
