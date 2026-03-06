@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen pt-28 pb-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+
+        <!-- Header & Navigation -->
+        <div class="mb-8">
+            <a href="{{ url_for('admin.jobs') }}"
+                class="text-gray-400 hover:text-white transition text-sm mb-4 inline-flex items-center">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Back to Jobs
+            </a>
+            <div class="flex justify-between items-end border-b border-white/10 pb-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-white mb-2">{{ job.title }}</h1>
+                    <p class="text-cyan-400 font-medium"><i class="fa-solid fa-building mr-1"></i> {{ job.department or
+                        'General' }}</p>
+                </div>
+                <button onclick="document.getElementById('upload-modal').classList.remove('hidden')"
+                    class="bg-white/10 border border-white/20 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-white hover:text-black transition flex items-center text-sm shadow-lg">
+                    <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Bulk Upload Resumes
+                </button>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0 text-sm">
+            <div class="flex space-x-2">
+                <span
+                    class="px-3 py-1.5 bg-cyan-500/20 text-cyan-400 rounded-lg font-bold border border-cyan-500/30">Total:
+                    {{ applicants|length }}</span>
+                <a href="{{ url_for('admin.shortlist') }}"
+                    class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white rounded-lg font-bold border border-white/10 transition">View
+                    Shortlist</a>
+            </div>
+            <!-- Simple filter visualization for now -->
+            <div class="flex items-center text-gray-400 bg-black/40 px-4 py-2 rounded-xl border border-white/5">
+                <i class="fa-solid fa-filter mr-2"></i> Sorted by Highest Score
+            </div>
+        </div>
+
+        <!-- Applicant List -->
+        <div class="grid grid-cols-1 gap-4">
+            {% for app in applicants %}
+            <a href="{{ url_for('admin.applicant_detail', app_id=app.id) }}"
+                class="block glass-panel p-5 rounded-2xl hover:bg-white/5 transition border border-transparent hover:border-white/10 group">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+
+                    <!-- Score Circle -->
+                    <div class="flex items-center md:w-32">
+                        <div class="relative w-16 h-16 rounded-full flex items-center justify-center 
+                            {% if app.score >= 70 %}bg-green-500/10 border-2 border-green-500 text-green-400 shadow-[0_0_15px_rgba(34,197,94,0.3)]
+                            {% elif app.score >= 40 %}bg-yellow-500/10 border-2 border-yellow-500 text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.3)]
+                            {% else %}bg-red-500/10 border-2 border-red-500 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.3)]
+                            {% endif %}">
+                            <span class="text-2xl font-black">{{ app.score }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center mb-1">
+                            <h3 class="text-lg font-bold text-white mr-3 truncate">{{ app.parsed.name or app.filename }}
+                            </h3>
+                            {% if app.applicant_status == 'Shortlisted' %}
+                            <span
+                                class="bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] uppercase font-bold px-2 py-0.5 rounded">Shortlisted</span>
+                            {% elif app.applicant_status == 'Rejected' %}
+                            <span
+                                class="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] uppercase font-bold px-2 py-0.5 rounded">Rejected</span>
+                            {% elif app.applicant_status == 'Hold' %}
+                            <span
+                                class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 text-[10px] uppercase font-bold px-2 py-0.5 rounded">Hold</span>
+                            {% else %}
+                            <span
+                                class="bg-white/10 text-gray-300 border border-white/20 text-[10px] uppercase font-bold px-2 py-0.5 rounded">New</span>
+                            {% endif %}
+                        </div>
+                        <div class="text-xs text-gray-400 flex flex-wrap gap-4 mb-3">
+                            {% if app.parsed.email %}<span><i class="fa-solid fa-envelope mr-1 opacity-60"></i> {{
+                                app.parsed.email }}</span>{% endif %}
+                            {% if app.parsed.phone %}<span><i class="fa-solid fa-phone mr-1 opacity-60"></i> {{
+                                app.parsed.phone }}</span>{% endif %}
+                        </div>
+
+                        <!-- Top Match/Miss Badges -->
+                        {% if app.data %}
+                        <div class="flex flex-wrap gap-2">
+                            <!-- Red Flags -->
+                            {% if app.score < 40 %} <span
+                                class="bg-red-500/20 text-red-400 text-[11px] px-2 py-1 rounded-md border border-red-500/30 flex items-center">
+                                <i class="fa-solid fa-flag mr-1"></i> Low Relevance
+                                </span>
+                                {% endif %}
+
+                                {% if app.data.details and app.data.details.skills %}
+                                <span
+                                    class="bg-white/5 text-gray-300 text-[11px] px-2 py-1 rounded-md border border-white/10">
+                                    <i class="fa-solid fa-code mr-1"></i> {{ app.data.details.skills|length }} Skills
+                                    Detected
+                                </span>
+                                {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action -->
+                    <div class="text-right text-gray-500 group-hover:text-white transition">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </div>
+
+                </div>
+            </a>
+            {% else %}
+            <div class="py-24 text-center bg-white/5 border border-dashed border-white/10 rounded-3xl">
+                <i class="fa-solid fa-users text-4xl text-gray-600 mb-4"></i>
+                <h3 class="text-xl font-bold text-white mb-2">No applicants yet</h3>
+                <p class="text-gray-400 max-w-sm mx-auto mb-6">Upload candidate resumes to start the automated screening
+                    process.</p>
+                <button onclick="document.getElementById('upload-modal').classList.remove('hidden')"
+                    class="bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 px-6 py-2.5 rounded-xl font-bold hover:bg-cyan-500 hover:text-black transition">Upload
+                    Resumes</button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div id="upload-modal"
+    class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[#0b132b] border border-white/10 rounded-3xl w-full max-w-xl shadow-2xl relative">
+        <div class="p-6 border-b border-white/10 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-white"><i class="fa-solid fa-cloud-arrow-up text-cyan-400 mr-2"></i> Bulk
+                Resume Upload</h2>
+            <button onclick="document.getElementById('upload-modal').classList.add('hidden')"
+                class="text-gray-400 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form id="bulk-upload-form" enctype="multipart/form-data" class="p-6">
+            <p class="text-sm text-gray-400 mb-6">Select up to 50 PDF files to automatically score them against
+                the <strong>{{ job.title }}</strong> requirements.</p>
+
+            <div id="drop-zone"
+                class="w-full border-2 border-dashed border-cyan-500/50 bg-cyan-500/5 rounded-2xl p-10 text-center hover:bg-cyan-500/10 transition cursor-pointer mb-6"
+                onclick="document.getElementById('file-input').click()">
+                <i class="fa-solid fa-file-pdf text-4xl text-cyan-400 mb-4"></i>
+                <h3 class="text-lg font-bold text-white mb-1">Click to browse or drag files</h3>
+                <p class="text-xs text-gray-500">Supports .pdf only (Max 5MB each, Limit 50)</p>
+                <input type="file" id="file-input" name="resumes" multiple accept=".pdf" class="hidden" required
+                    onchange="handleSelection(this.files)">
+            </div>
+
+            <div id="upload-progress-container" class="hidden mb-6 max-h-48 overflow-y-auto pr-2 space-y-2">
+                <!-- File progress rows injected here via JS -->
+            </div>
+
+            <button type="submit" id="submit-btn" disabled
+                class="w-full bg-gray-600 cursor-not-allowed text-white px-8 py-3.5 rounded-xl font-bold transition uppercase tracking-wider text-sm flex justify-center items-center">
+                <span>Start Processing Uploads</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById('bulk-upload-form');
+    const input = document.getElementById('file-input');
+    const submitBtn = document.getElementById('submit-btn');
+    const progressContainer = document.getElementById('upload-progress-container');
+    let selectedFiles = [];
+
+    function handleSelection(files) {
+        selectedFiles = Array.from(files);
+
+        if (selectedFiles.length > 50) {
+            alert('Maximum 50 resumes allowed. Truncating list.');
+            selectedFiles = selectedFiles.slice(0, 50);
+        }
+
+        progressContainer.innerHTML = '';
+        progressContainer.classList.remove('hidden');
+
+        selectedFiles.forEach((file, index) => {
+            let error = null;
+            if (file.size > 5 * 1024 * 1024) error = 'Too large (>5MB)';
+            if (!file.name.toLowerCase().endsWith('.pdf')) error = 'Invalid type (PDF only)';
+
+            const statusHtml = error
+                ? `<span class="text-red-400 text-xs"><i class="fa-solid fa-circle-xmark mr-1"></i> ${error}</span>`
+                : `<span class="text-cyan-400 text-xs pending-status"><i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Ready</span>`;
+
+            const row = `
+                <div id="file-row-${index}" class="bg-white/5 border border-white/10 rounded-lg p-3 flex justify-between items-center ${error ? 'opacity-50' : ''}">
+                    <div class="flex items-center truncate mr-4">
+                        <i class="fa-solid fa-file-pdf text-gray-400 mr-3"></i>
+                        <span class="text-white text-sm truncate">${file.name}</span>
+                    </div>
+                    <div class="status-indicator whitespace-nowrap">
+                        ${statusHtml}
+                    </div>
+                </div>
+            `;
+            progressContainer.insertAdjacentHTML('beforeend', row);
+        });
+
+        const validFiles = selectedFiles.filter(f => f.size <= 5 * 1024 * 1024 && f.name.toLowerCase().endsWith('.pdf'));
+
+        if (validFiles.length > 0) {
+            submitBtn.disabled = false;
+            submitBtn.className = "w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-8 py-3.5 rounded-xl font-bold hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] transition uppercase tracking-wider text-sm flex justify-center items-center";
+            submitBtn.innerHTML = '<span>Start Parsing <i class="fa-solid fa-wand-magic-sparkles ml-2"></i></span>';
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.className = "w-full bg-gray-600 cursor-not-allowed text-white px-8 py-3.5 rounded-xl font-bold transition uppercase tracking-wider text-sm flex justify-center items-center";
+        }
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>Uploading... <i class="fa-solid fa-spinner fa-spin ml-2"></i></span>';
+
+        // Update valid rows to "Uploading & Parsing..."
+        selectedFiles.forEach((file, index) => {
+            const isValid = (file.size <= 5 * 1024 * 1024 && file.name.toLowerCase().endsWith('.pdf'));
+            if (isValid) {
+                const indicator = document.querySelector(`#file-row-${index} .status-indicator`);
+                indicator.innerHTML = `<span class="text-yellow-400 text-xs"><i class="fa-solid fa-cog fa-spin mr-1"></i> Parsing & Scoring...</span>`;
+            }
+        });
+
+        const formData = new FormData();
+        const validFiles = selectedFiles.filter(f => f.size <= 5 * 1024 * 1024 && f.name.toLowerCase().endsWith('.pdf'));
+        validFiles.forEach(file => formData.append('resumes', file));
+
+        try {
+            const response = await fetch("{{ url_for('admin.api_bulk_upload_resumes', job_id=job.id) }}", {
+                method: 'POST',
+                body: formData
+            });
+
+            const results = await response.json();
+
+            if (response.ok) {
+                // Update UI based on backend results
+                results.forEach((result) => {
+                    // find the corresponding row by candidate name/filename
+                    const fileIndex = selectedFiles.findIndex(f => f.name === result.candidateName || result.candidateName.includes(f.name));
+                    if (fileIndex !== -1) {
+                        const indicator = document.querySelector(`#file-row-${fileIndex} .status-indicator`);
+                        if (result.error) {
+                            indicator.innerHTML = `<span class="text-red-400 text-xs font-bold"><i class="fa-solid fa-xmark mr-1"></i> ${result.status}</span>`;
+                        } else {
+                            indicator.innerHTML = `<span class="text-green-400 text-xs font-bold"><i class="fa-solid fa-check mr-1"></i> Score: ${result.score}</span>`;
+                        }
+                    }
+                });
+
+                submitBtn.innerHTML = '<span>Complete! Reloading... <i class="fa-solid fa-check ml-2"></i></span>';
+                submitBtn.classList.replace('from-blue-600', 'from-green-600');
+                submitBtn.classList.replace('to-cyan-500', 'to-green-500');
+
+                setTimeout(() => window.location.reload(), 1500);
+
+            } else {
+                alert(`Upload failed: ${results.error || 'Server error'}`);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Try Again</span>';
+            }
+        } catch (err) {
+            console.error(err);
+            alert('A network error occurred during upload.');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>Try Again</span>';
+        }
+    });
+</script>
+{% endblock %}

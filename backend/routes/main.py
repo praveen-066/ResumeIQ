@@ -1,19 +1,24 @@
-from flask import Blueprint, render_template, request, jsonify, current_app
+from flask import Blueprint, render_template, request, jsonify, current_app, redirect, url_for
 from flask_login import login_required, current_user
 import os
 import json
 import secrets
 import hashlib
 
-from models import db, Resume, ParsedData
+from models import db, Resume, ParsedData, Inquiry
 from utils.extractor import extract_text
 from utils.scorer import calculate_ats_score
 from utils.analyzer import parse_resume, analyze_skill_gap
+from utils.decorators import candidate_required
+from mongo_models import AtsScore
 main = Blueprint('main', __name__)
 
 
 @main.route('/')
 def index():
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+        
     try:
         from utils.constants import TARGET_ROLES
         target_roles = TARGET_ROLES
@@ -32,6 +37,7 @@ def index():
 
 @main.route('/upload', methods=['POST'])
 @login_required
+@candidate_required
 def upload_file():
     if 'resume' not in request.files:
         return jsonify({'error': 'No file part'}), 400
@@ -129,6 +135,18 @@ def upload_file():
         db.session.add(resume_entry)
         db.session.flush()               # get resume_entry.id before committing
 
+        ats_score = AtsScore(
+            candidate_id=str(current_user.id),
+            resume_id=resume_entry.id,
+            resume_text=text[:10000],
+            score=score,
+            breakdown=breakdown,
+            missing_skills=missing_skills,
+            red_flags=feedback,
+            status="New"
+        )
+        ats_score.save()
+
         # --- Persist ParsedData record ---
         parsed_entry = ParsedData(
             resume_id=resume_entry.id,
@@ -161,6 +179,7 @@ def upload_file():
 
 @main.route('/result')
 @login_required
+@candidate_required
 def result():
     return render_template('result.html')
 
@@ -170,8 +189,8 @@ def result():
 def view_report(resume_id):
     resume = Resume.query.get_or_404(resume_id)
     
-    # Check permission: Only owner or admin can view
-    if current_user.role != 'admin' and resume.user_id != current_user.id:
+    # Check permission: Owner, Recruiter, or Admin can view
+    if current_user.role not in ['admin', 'recruiter'] and resume.user_id != current_user.id:
         return jsonify({'error': 'Unauthorized'}), 403
         
     analysis_data = json.loads(resume.analysis_data) if resume.analysis_data else {}
@@ -180,6 +199,7 @@ def view_report(resume_id):
 
 @main.route('/dashboard')
 @login_required
+@candidate_required
 def dashboard():
     resumes = (
         Resume.query
@@ -188,6 +208,36 @@ def dashboard():
         .all()
     )
     for r in resumes:
-        if r.analysis_data:
+        mongo_score = AtsScore.objects(resume_id=r.id).first()
+        if mongo_score:
+            r.score = mongo_score.score
+            r.data = mongo_score.to_json()
+            if r.analysis_data:
+                r.data['details'] = json.loads(r.analysis_data).get('details', {})
+        elif r.analysis_data:
             r.data = json.loads(r.analysis_data)
     return render_template('dashboard.html', resumes=resumes)
+
+
+@main.route('/api/contact', methods=['POST'])
+def contact():
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'message': 'No data provided'}), 400
+    
+    name = data.get('name')
+    email = data.get('email')
+    subject = data.get('subject')
+    message = data.get('message')
+    
+    if not all([name, email, subject, message]):
+        return jsonify({'success': False, 'message': 'All fields are required'}), 400
+    
+    try:
+        new_inquiry = Inquiry(name=name, email=email, subject=subject, message=message)
+        db.session.add(new_inquiry)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Message sent successfully!'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500

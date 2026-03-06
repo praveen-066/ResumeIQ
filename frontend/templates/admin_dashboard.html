@@ -14,13 +14,19 @@
                     class="bg-purple text-white px-5 py-2 rounded-lg font-bold hover:bg-white hover:text-black transition shadow-[0_0_15px_rgba(189,0,255,0.4)] flex items-center text-sm">
                     <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Batch Upload
                 </a>
-                <a href="{{ url_for('admin.candidates') }}"
-                    class="text-neon hover:text-white transition bg-neon/10 border border-neon/30 px-4 py-2 rounded-lg text-sm font-bold flex items-center">
-                    <i class="fa-solid fa-users-viewfinder mr-2"></i> Top Candidates
+                <a href="{{ url_for('admin.jobs') }}"
+                    class="text-cyan-400 hover:text-white transition bg-cyan-400/10 border border-cyan-400/30 px-4 py-2 rounded-lg text-sm font-bold flex items-center">
+                    <i class="fa-solid fa-briefcase mr-2"></i> Manage Jobs
                 </a>
+                {% if current_user.role == 'admin' %}
                 <a href="{{ url_for('admin.settings') }}"
                     class="text-gray-400 hover:text-white transition bg-white/5 border border-white/10 px-4 py-2 rounded-lg text-sm flex items-center">
                     <i class="fa-solid fa-gear mr-2"></i> Settings
+                </a>
+                {% endif %}
+                <a href="{{ url_for('admin.inquiries') }}"
+                    class="text-cyan-400 hover:text-white transition bg-cyan-400/10 border border-cyan-400/30 px-4 py-2 rounded-lg text-sm font-bold flex items-center">
+                    <i class="fa-solid fa-message mr-2"></i> Inquiries
                 </a>
             </div>
         </div>
@@ -81,10 +87,12 @@
                                     user.role }}</span></td>
                             <td class="px-6 py-4">{{ user.created_at.strftime('%Y-%m-%d') }}</td>
                             <td class="px-6 py-4">
-                                {% if user.role != 'admin' %}
+                                {% if current_user.role == 'admin' and user.role != 'admin' %}
                                 <a href="{{ url_for('admin.delete_user', user_id=user.id) }}"
                                     class="text-red-400 hover:text-red-300 transition"
                                     onclick="return confirm('Are you sure?')">Delete</a>
+                                {% else %}
+                                <span class="text-gray-600">No actions</span>
                                 {% endif %}
                             </td>
                         </tr>
@@ -147,10 +155,10 @@
         new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: {{ chart_labels | tojson }},
+                labels: {{ chart_labels | tojson | safe }},
         datasets: [{
             label: 'Resume Score',
-            data: {{ chart_data | tojson }},
+            data: {{ chart_data | tojson | safe }},
         backgroundColor: gradient,
         borderColor: '#bd00ff',
         borderWidth: 1,

@@ -17,10 +17,16 @@ def register():
             username = data.get('username')
             email = data.get('email')
             password = data.get('password')
+            role = data.get('role', 'user')
+            if role not in ['user', 'recruiter']:
+                role = 'user'
         else:
              username = request.form.get('username')
              email = request.form.get('email')
              password = request.form.get('password')
+             role = request.form.get('role', 'user')
+             if role not in ['user', 'recruiter']:
+                role = 'user'
         
         # Validation
         if not username or not email or not password:
@@ -43,7 +49,7 @@ def register():
             return redirect(url_for('auth.register'))
         
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        new_user = User(username=username, email=email, password=hashed_password, role='user')
+        new_user = User(username=username, email=email, password=hashed_password, role=role)
         
         try:
             db.session.add(new_user)
@@ -82,11 +88,22 @@ def login():
              flash("User doesn't exist. Please register.", 'error')
              return redirect(url_for('auth.login'))
 
+        # Role Lock Check
+        requested_role = (data.get('role') if request.is_json else request.form.get('role')) or 'user'
+        if user.role != requested_role:
+            role_display = "Candidate" if user.role == "user" else user.role.capitalize()
+            portal_display = "Candidate" if requested_role == "user" else requested_role.capitalize()
+            msg = f"This account is registered as a {role_display}. Please use the {role_display} portal instead of {portal_display}."
+            if request.is_json:
+                return jsonify({'success': False, 'message': msg}), 401
+            flash(msg, 'error')
+            return redirect(url_for('auth.login', role=requested_role))
+
         if user and bcrypt.check_password_hash(user.password, password):
             login_user(user)
             
             # Role-based redirect logic
-            if user.role == 'admin':
+            if user.role in ['admin', 'recruiter']:
                 default_target = url_for('admin.dashboard')
             else:
                 default_target = url_for('main.dashboard')

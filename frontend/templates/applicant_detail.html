@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen pt-28 pb-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto">
+
+        <!-- Navigation -->
+        <div class="mb-6 flex justify-between items-center">
+            <a href="{{ url_for('admin.job_applicants', job_id=resume.job_id) }}"
+                class="text-gray-400 hover:text-white transition text-sm flex items-center">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Back to Applicant Pool
+            </a>
+
+            <form method="POST" action="{{ url_for('admin.applicant_update_status', app_id=resume.id) }}"
+                class="flex space-x-3">
+                <input type="hidden" name="notes" value="{{ resume.recruiter_notes or '' }}">
+                <button type="submit" name="status" value="Rejected"
+                    class="bg-red-500/10 border border-red-500/30 text-red-500 px-5 py-2 rounded-xl font-bold hover:bg-red-500 hover:text-white transition flex items-center text-sm">
+                    <i class="fa-solid fa-xmark mr-2"></i> Reject
+                </button>
+                <button type="submit" name="status" value="Hold"
+                    class="bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 px-5 py-2 rounded-xl font-bold hover:bg-yellow-500 hover:text-white transition flex items-center text-sm">
+                    <i class="fa-solid fa-pause mr-2"></i> Hold
+                </button>
+                <button type="submit" name="status" value="Shortlisted"
+                    class="bg-blue-500/10 border border-blue-500/30 text-blue-500 px-5 py-2 rounded-xl font-bold hover:bg-blue-500 hover:text-white transition flex items-center text-sm shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                    <i class="fa-solid fa-star mr-2"></i> Shortlist
+                </button>
+            </form>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Left Column: Summary & Timeline -->
+            <div class="lg:col-span-2 space-y-8">
+
+                <!-- Overview Card -->
+                <div class="glass-panel p-8 rounded-3xl border border-white/5 relative overflow-hidden">
+                    <div
+                        class="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-[80px] pointer-events-none">
+                    </div>
+
+                    <div class="flex flex-col md:flex-row gap-6 items-start md:items-center relative z-10">
+                        <div class="w-24 h-24 rounded-2xl flex items-center justify-center border-4 
+                            {% if resume.score >= 70 %}bg-green-500/20 border-green-500 text-green-400 shadow-[0_0_30px_rgba(34,197,94,0.4)]
+                            {% elif resume.score >= 40 %}bg-yellow-500/20 border-yellow-500 text-yellow-400 shadow-[0_0_30px_rgba(234,179,8,0.4)]
+                            {% else %}bg-red-500/20 border-red-500 text-red-400 shadow-[0_0_30px_rgba(239,68,68,0.4)]
+                            {% endif %}">
+                            <span class="text-4xl font-extrabold">{{ resume.score }}</span>
+                        </div>
+
+                        <div class="flex-1">
+                            <h1 class="text-3xl font-bold text-white mb-2">{{ resume.parsed.name or resume.filename }}
+                            </h1>
+                            <div class="flex flex-wrap gap-4 text-sm text-gray-400 mb-4">
+                                {% if resume.parsed.email %}<span class="flex items-center"><i
+                                        class="fa-solid fa-envelope mr-2 text-cyan-400"></i>{{ resume.parsed.email
+                                    }}</span>{% endif %}
+                                {% if resume.parsed.phone %}<span class="flex items-center"><i
+                                        class="fa-solid fa-phone mr-2 text-cyan-400"></i>{{ resume.parsed.phone
+                                    }}</span>{% endif %}
+                            </div>
+
+                            <div class="flex flex-wrap gap-2">
+                                <span
+                                    class="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-bold text-gray-300">
+                                    Current Status: <span
+                                        class="{% if resume.applicant_status == 'Shortlisted' %}text-blue-400{% elif resume.applicant_status == 'Rejected' %}text-red-400{% elif resume.applicant_status == 'Hold' %}text-yellow-400{% else %}text-white{% endif %} ml-1">{{
+                                        resume.applicant_status }}</span>
+                                </span>
+                                {% if resume.score < 40 %} <span
+                                    class="px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-lg text-xs font-bold text-red-500 flex items-center">
+                                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> Low Relevance
+                                    </span>
+                                    {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills Analysis -->
+                {% if data and data.breakdown %}
+                <div class="glass-panel p-8 rounded-3xl border border-white/5">
+                    <h2 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-4"><i
+                            class="fa-solid fa-layer-group text-cyan-400 mr-2"></i> Match Breakdown</h2>
+                    <div class="space-y-4">
+                        {% for category, cat_score in data.breakdown.items() %}
+                        <div>
+                            <div class="flex justify-between text-sm mb-1 font-medium">
+                                <span class="text-gray-300">{{ category }}</span>
+                                <span class="text-white">{{ cat_score }} <span
+                                        class="text-gray-500 text-xs">pts</span></span>
+                            </div>
+                            <div class="w-full bg-black/50 rounded-full h-2">
+                                <div class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full"
+                                    style="width: {{ (cat_score / 50 * 100) if category == 'Required Skills' else (cat_score / 20 * 100) if category == 'Experience' else (cat_score / 15 * 100) }}%">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if data and data.suggestions and data.suggestions.missing_keywords %}
+                <div class="glass-panel p-8 rounded-3xl border border-red-500/20 bg-red-500/5">
+                    <h2 class="text-xl font-bold text-red-400 mb-6 border-b border-red-500/10 pb-4"><i
+                            class="fa-solid fa-circle-exclamation mr-2"></i> Missing Skills Gap</h2>
+                    <div class="flex flex-wrap gap-2">
+                        {% for kw in data.suggestions.missing_keywords %}
+                        <span
+                            class="px-3 py-1.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg text-sm font-medium">{{
+                            kw }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Raw Extracted Experience/Education -->
+                <div class="glass-panel p-8 rounded-3xl border border-white/5">
+                    <h2 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-4"><i
+                            class="fa-solid fa-file-lines text-cyan-400 mr-2"></i> Extracted Resume Text</h2>
+                    <div class="bg-black/40 rounded-xl p-5 border border-white/5 max-h-96 overflow-y-auto">
+                        <pre
+                            class="whitespace-pre-wrap text-sm text-gray-400 font-sans leading-relaxed">{{ resume.parsed.raw_text[:2000] }}...</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Actions & Notes -->
+            <div class="space-y-6">
+                <!-- Notes Box -->
+                <div class="glass-panel p-6 rounded-3xl border border-white/5">
+                    <h3 class="text-lg font-bold text-white mb-4"><i
+                            class="fa-solid fa-pen-to-square text-cyan-400 mr-2"></i> Recruiter Notes</h3>
+                    <form method="POST" action="{{ url_for('admin.applicant_update_status', app_id=resume.id) }}">
+                        <input type="hidden" name="status" value="{{ resume.applicant_status }}">
+                        <textarea name="notes" rows="6" placeholder="Add private notes about this candidate..."
+                            class="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white text-sm focus:border-cyan-500 focus:outline-none placeholder-gray-600 mb-4 resize-none">{{ resume.recruiter_notes or '' }}</textarea>
+                        <button type="submit"
+                            class="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition border border-white/10 text-sm">Save
+                            Notes</button>
+                    </form>
+                </div>
+
+                <!-- Feedback Details -->
+                {% if data and data.suggestions and data.suggestions.weaknesses %}
+                <div class="glass-panel p-6 rounded-3xl border border-white/5">
+                    <h3 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-robot text-cyan-400 mr-2"></i>
+                        ATS AI Insights</h3>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        {% for weakness in data.suggestions.weaknesses %}
+                        <li class="flex items-start">
+                            <i class="fa-solid fa-minus text-red-500 mt-1 mr-3 text-[10px]"></i>
+                            <span>{{ weakness }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

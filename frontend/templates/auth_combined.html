@@ -67,9 +67,22 @@
                     <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-neon to-purple"></div>
 
                     <h2 class="text-2xl font-bold text-white mb-2">Welcome Back</h2>
-                    <p class="text-gray-400 text-sm mb-8">Enter your credentials to access your dashboard.</p>
+                    <p class="text-gray-400 text-sm mb-6">Enter your credentials to access your dashboard.</p>
+
+                    <!-- Role Selector (Login) -->
+                    <div class="flex items-center space-x-1 bg-white/5 rounded-xl p-1 mb-8 border border-white/5">
+                        <button type="button" onclick="selectRole('user', 'login')" id="loginRoleUser"
+                            class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-300 bg-neon/20 text-white border border-neon/30">
+                            Candidate
+                        </button>
+                        <button type="button" onclick="selectRole('recruiter', 'login')" id="loginRoleRecruiter"
+                            class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-300 text-gray-400 hover:text-white border border-transparent">
+                            Recruiter
+                        </button>
+                    </div>
 
                     <form id="loginForm" class="space-y-6">
+                        <input type="hidden" name="role" id="loginRoleInput" value="user">
                         <div class="group relative">
                             <input type="text" id="loginEmail" name="email" required
                                 class="peer w-full bg-transparent border-b border-gray-600 py-2 text-white focus:outline-none focus:border-neon transition-colors placeholder-transparent">
@@ -126,9 +139,22 @@
                     <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple to-pink-500"></div>
 
                     <h2 class="text-2xl font-bold text-white mb-2">Create Account</h2>
-                    <p class="text-gray-400 text-sm mb-8">Join ResumeIQ to start optimizing your career.</p>
+                    <p class="text-gray-400 text-sm mb-6">Join ResumeIQ to start optimizing your career.</p>
+
+                    <!-- Role Selector (Register) -->
+                    <div class="flex items-center space-x-1 bg-white/5 rounded-xl p-1 mb-8 border border-white/5">
+                        <button type="button" onclick="selectRole('user', 'register')" id="regRoleUser"
+                            class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-300 bg-purple/20 text-white border border-purple/30">
+                            Candidate
+                        </button>
+                        <button type="button" onclick="selectRole('recruiter', 'register')" id="regRoleRecruiter"
+                            class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-300 text-gray-400 hover:text-white border border-transparent">
+                            Recruiter
+                        </button>
+                    </div>
 
                     <form id="registerForm" class="space-y-6">
+                        <input type="hidden" name="role" id="regRoleInput" value="user">
                         <div class="group relative">
                             <input type="text" id="regUsername" name="username" required
                                 class="peer w-full bg-transparent border-b border-gray-600 py-2 text-white focus:outline-none focus:border-purple transition-colors placeholder-transparent">
@@ -268,7 +294,34 @@
         // Form Handlers
         handleAuthForm('loginForm', '/login', 'loginError');
         handleAuthForm('registerForm', '/register', 'registerError');
+
+        // Check for role in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlRole = urlParams.get('role');
+        if (urlRole === 'recruiter') {
+            selectRole('recruiter', mode === 'register' ? 'register' : 'login');
+        }
     });
+
+    function selectRole(role, context) {
+        const isRegister = context === 'register';
+        const roleInput = document.getElementById(isRegister ? 'regRoleInput' : 'loginRoleInput');
+        roleInput.value = role;
+
+        const userBtn = document.getElementById(isRegister ? 'regRoleUser' : 'loginRoleUser');
+        const recruiterBtn = document.getElementById(isRegister ? 'regRoleRecruiter' : 'loginRoleRecruiter');
+
+        const activeClass = isRegister ? 'bg-purple/20 text-white border border-purple/30' : 'bg-neon/20 text-white border border-neon/30';
+        const inactiveClass = 'text-gray-400 hover:text-white border border-transparent';
+
+        if (role === 'user') {
+            userBtn.className = `flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-300 ${activeClass}`;
+            recruiterBtn.className = `flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-300 ${inactiveClass}`;
+        } else {
+            userBtn.className = `flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-300 ${inactiveClass}`;
+            recruiterBtn.className = `flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-300 ${activeClass}`;
+        }
+    }
 
     function flipCard(target) {
         const card = document.getElementById('authCardInner');

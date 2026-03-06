@@ -12,9 +12,8 @@ from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 
 # ---------------------------------------------------------------------------
-# Extension instances — created here so blueprints can import them directly.
-# ---------------------------------------------------------------------------
 from models import db          # single shared SQLAlchemy instance
+from mongo_db import init_mongodb
 
 login_manager = LoginManager()
 bcrypt = Bcrypt()
@@ -71,6 +70,7 @@ def create_app():
     migrate.init_app(app, db)        # Flask-Migrate (Alembic)
     login_manager.init_app(app)
     bcrypt.init_app(app)
+    init_mongodb(app)                # Connect to MongoDB via MongoEngine
 
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please log in to access this page.'

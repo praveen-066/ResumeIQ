@@ -6,10 +6,12 @@ ResumeIQ is a modern, AI-powered resume analyzer that helps job seekers optimize
 
 - **📄 Multi-Format Support**: Upload PDF or DOCX resumes.
 - **⚡ Instant Analysis**: Basic NLP extracts contact info, skills, experience, and projects.
+- **🤝 Separate Role Paths**: Distinct login/registration flows for Candidates and Recruiters.
 - **🎯 Role-Based Scoring**: Select a target role (Frontend, Backend, DevOps, Data Science) for tailored feedback.
 - **📊 Visual Dashboard**: Circular ATS Score Meter, Radar Chart, Skill Gap Analysis.
+- **📧 Contact System**: Integrated inquiry form for users to reach out to the team.
 - **💡 Smart Suggestions**: Actionable feedback and "Power Verb" recommendations.
-- **🔐 Secure Access**: Role-based authentication (User/Admin) and secure data handling.
+- **🔐 Secure Access**: Role-based authentication (Candidate/Recruiter/Admin) and secure data handling.
 
 ## Tech Stack
 

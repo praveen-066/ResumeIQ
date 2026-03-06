@@ -26,6 +26,28 @@ class User(UserMixin, db.Model):
         return f'<User {self.username!r} role={self.role!r}>'
 
 
+class JobDescription(db.Model):
+    __tablename__ = 'job_description'
+
+    id = db.Column(db.Integer, primary_key=True)
+    recruiter_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    department = db.Column(db.String(150), nullable=True)
+    status = db.Column(db.String(20), default='Active', nullable=False)  # Active, Closed
+    
+    required_skills = db.Column(db.Text, nullable=True)  # JSON serialized
+    nice_to_have_skills = db.Column(db.Text, nullable=True)  # JSON serialized
+    experience_level = db.Column(db.Integer, nullable=True)  # years required
+    education_requirement = db.Column(db.String(100), nullable=True)
+    raw_text = db.Column(db.Text, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    # A Job can have many Resumes (applicants)
+    resumes = db.relationship('Resume', backref='job', lazy=True, cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<JobDescription id={self.id} title={self.title!r}>'
 class Resume(db.Model):
     __tablename__ = 'resume'
 
@@ -45,13 +67,18 @@ class Resume(db.Model):
     score = db.Column(db.Integer, nullable=False)
     role_applied = db.Column(db.String(100), nullable=False)
     analysis_data = db.Column(db.Text, nullable=True)      # full JSON blob
-    is_shortlisted = db.Column(db.Boolean, default=False)
+    
+    # Recruiter applicant tracking
+    job_id = db.Column(db.Integer, db.ForeignKey('job_description.id'), nullable=True)
+    applicant_status = db.Column(db.String(50), default='New', nullable=False) # New, Shortlisted, Hold, Rejected
+    recruiter_notes = db.Column(db.Text, nullable=True)
+    
     batch_id = db.Column(db.String(100), nullable=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     def __repr__(self):
-        return f'<Resume id={self.id} file={self.filename!r} score={self.score} shortlisted={self.is_shortlisted}>'
+        return f'<Resume id={self.id} file={self.filename!r} score={self.score} status={self.applicant_status}>'
 
 
 class SMTPConfig(db.Model):
@@ -90,3 +117,18 @@ class ParsedData(db.Model):
 
     def __repr__(self):
         return f'<ParsedData resume_id={self.resume_id} name={self.name!r}>'
+
+
+class Inquiry(db.Model):
+    __tablename__ = 'inquiry'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(150), nullable=False)
+    subject = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='New')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f'<Inquiry id={self.id} from={self.email!r} subject={self.subject!r}>'

@@ -60,9 +60,9 @@
 
                 <div class="hidden md:flex items-center space-x-8">
                     {% if current_user.is_authenticated %}
-                    {% if current_user.role == 'admin' %}
+                    {% if current_user.role in ['admin', 'recruiter'] %}
                     <a href="{{ url_for('admin.dashboard') }}"
-                        class="text-sm font-medium text-purple hover:text-white transition">Admin Panel</a>
+                        class="text-sm font-medium text-purple hover:text-white transition">Management Panel</a>
                     {% else %}
                     <a href="{{ url_for('main.dashboard') }}"
                         class="text-sm font-medium text-gray-300 hover:text-white transition">My Dashboard</a>
@@ -73,11 +73,13 @@
                     <a href="{{ url_for('auth.logout') }}"
                         class="text-sm font-medium text-gray-300 hover:text-white transition">Logout</a>
                     {% else %}
+                    {% if request.endpoint not in ['auth.login', 'auth.register'] %}
                     <a href="{{ url_for('auth.login') }}"
                         class="text-sm font-medium text-gray-300 hover:text-white transition">Login</a>
                     <a href="{{ url_for('auth.register') }}"
                         class="bg-neon text-black px-5 py-2 rounded-full font-bold hover:bg-white transition shadow-[0_0_15px_rgba(0,243,255,0.4)]">Sign
                         Up</a>
+                    {% endif %}
                     {% endif %}
                 </div>
             </div>
